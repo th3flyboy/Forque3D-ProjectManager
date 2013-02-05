@@ -4,7 +4,7 @@
 
 TARGET = 
 DEPENDPATH += . ../../source
-INCLUDEPATH += .
+INCLUDEPATH += . ../../source
 CONFIG += qt
 QT += network xml
 
