@@ -696,6 +696,7 @@ void Torque3DFrontloader::createNewProject(const QString &templatePath, const QS
    mCreateReformattingFilesPause = false;
    mCreateProjectFileCount = 0;
    mProjectGenerationExitNow = false;
+   mProjectGenerationClientGenerated = false;
 
    mTemplateDir.setPath(templatePath);
    mNewProjectDir.setPath(newProjectPath);
@@ -945,12 +946,19 @@ void Torque3DFrontloader::createReformattingFiles()
 
 void Torque3DFrontloader::createProjectGeneration()
 {
-   mProgressDialog->incStage();
+   if(!mProjectGenerationClientGenerated)
+   {
+      mProgressDialog->incStage();
+   }
 
    QString rootPath = mNewProjectDir.path();
    QString buildFiles(rootPath + "/buildFiles");
 
-   if(!QFile::exists(buildFiles))
+   QSettings settings;
+   bool buildClient = settings.value("buildClient", true).toBool();
+   bool buildDedicated = settings.value("buildDedicated", true).toBool();
+
+   if(!QFile::exists(buildFiles) || !(buildClient || buildDedicated) || !(PlatformCheck::isLinux() || buildClient))
    {
       mProgressDialog->setSubStageProgress(100);
       mProgressDialog->updateDetailText("No source to generate");
@@ -972,7 +980,14 @@ void Torque3DFrontloader::createProjectGeneration()
    }
    else if(PlatformCheck::isLinux())
    {
-      argList.append(rootPath + "/buildFiles/config/project.linux.conf");
+      if(buildClient && !mProjectGenerationClientGenerated)
+      {
+         argList.append(rootPath + "/buildFiles/config/project.linux.conf");
+      }
+      else if(buildDedicated)
+      {
+         argList.append(rootPath + "/buildFiles/config/project.linux_ded.conf");
+      }
    }
 
    argList.append(mBaseAppPath);
@@ -1014,17 +1029,6 @@ void Torque3DFrontloader::projectGenerationError()
 
 void Torque3DFrontloader::projectGenerationFinished(int exitCode, QProcess::ExitStatus exitStatus)
 {
-   if(!mProjectGenerationExitNow)
-   {
-      mProgressDialog->setSubStageProgress(100);
-      createProjectCheck();
-   }
-   else
-   {
-      // forced exit so we close out
-      mProgressDialog->fail();
-   }
-
    disconnect(this, SIGNAL(setProjectGenerationThreadExit()), this, SLOT(projectGenerationExitNow()));
    disconnect(mProjectGenerationProcess, SIGNAL(started()), this, SLOT(projectGenerationStarted()));
    disconnect(mProjectGenerationProcess, SIGNAL(error()), this, SLOT(projectGenerationError()));
@@ -1032,6 +1036,33 @@ void Torque3DFrontloader::projectGenerationFinished(int exitCode, QProcess::Exit
    disconnect(mProjectGenerationProcess, SIGNAL(finished()), mProjectGenerationProcess, SLOT(kill()));
    disconnect(mProjectGenerationProcess, SIGNAL(readyReadStandardOutput()),this, SLOT(projectGenerationStandardWrite()) );
    disconnect(mProjectGenerationProcess, SIGNAL(readyReadStandardError()), this, SLOT(projectGenerationErrorWrite()) );
+
+   QSettings settings;
+   bool buildClient = settings.value("buildClient", true).toBool();
+   bool buildDedicated = settings.value("buildDedicated", true).toBool();
+
+   if(!mProjectGenerationExitNow)
+   {
+      if(!PlatformCheck::isLinux() || !buildClient ||
+         !buildDedicated || mProjectGenerationClientGenerated)
+      {
+         mProjectGenerationClientGenerated = false;
+         mProgressDialog->setSubStageProgress(100);
+         createProjectCheck();
+      }
+      else
+      {
+         mProjectGenerationClientGenerated = true;
+         mProgressDialog->setSubStageProgress(50);
+         mProjectGenerationExitNow = false;
+         createProjectGeneration();
+      }
+   }
+   else
+   {
+      // forced exit so we close out
+      mProgressDialog->fail();
+   }
 }
 
 void Torque3DFrontloader::projectGenerationExitNow()
