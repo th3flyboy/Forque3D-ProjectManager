@@ -4,7 +4,7 @@
 #include <QtGui>
 #include <QtCore>
 
-#ifdef Q_WS_WIN
+#ifdef Q_OS_WIN32
 #include <comdef.h>
 #endif
 
@@ -80,7 +80,7 @@ class ProjectList : public QObject
    Q_OBJECT
 
 public:
-#ifdef Q_WS_WIN
+#ifdef Q_OS_WIN32
    static HWND appWindow;
 #endif
 
@@ -107,7 +107,7 @@ public:
 
    static QString getAppPath(QString path = "");
 	  
-#ifdef Q_WS_WIN
+#ifdef Q_OS_WIN32
    static BOOL CALLBACK EnumWindowsProc( HWND hwnd, LPARAM lParam );
 #endif
 private:

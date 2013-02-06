@@ -12,7 +12,7 @@
 #include "ProjectTree.h"
 #include "NewProjectPage.h"
 
-#ifdef Q_WS_WIN
+#ifdef Q_OS_WIN32
 #include <stdio.h>
 #include <tchar.h>
 #include <windows.h>
@@ -20,8 +20,8 @@
 #include <tlhelp32.h>
 #endif
 
-#ifdef Q_WS_MAC
-#include <signal.h>   
+#if defined(Q_OS_MAC) || defined(Q_OS_LINUX)
+#include <signal.h>
 #endif
 
 
@@ -76,7 +76,7 @@ public:
    void readSettings();
    void writeSettings();
 
-#ifdef Q_WS_WIN
+#ifdef Q_OS_WIN32
    int PauseResumeThreadList(DWORD dwOwnerPID, bool bResumeThread = false);
 #endif
    bool getResourceInfo(const QString &filePath, QString &plugin, QString &fileDesc, QString &internalName, 

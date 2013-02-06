@@ -33,7 +33,7 @@ Torque3DFrontloader::Torque3DFrontloader(QWidget *parent, Qt::WFlags flags)
 
    // Setup the New Project Page, this needs to be after the ProjectList is set up
    createNewProjectPage();
-   startUp();	
+   startUp();
 
    // --- we do our tcp song and dance to ensure we don't run two instances of the Toolbox
    // lets see if we are already running
@@ -103,33 +103,33 @@ void Torque3DFrontloader::setupValues()
    mFirstTray = true;
 
    mBaseAppPath = ProjectList::getAppPath(QApplication::applicationDirPath());
-   mPackagingPath = mBaseAppPath + "/Packaging";
-   mStagingPath = mPackagingPath + "/Staging";
-   mOutputPath = mPackagingPath + "/Output";
+   mPackagingPath = QDir::toNativeSeparators(mBaseAppPath + "/Packaging");
+   mStagingPath = QDir::toNativeSeparators(mPackagingPath + "/Staging");
+   mOutputPath = QDir::toNativeSeparators(mPackagingPath + "/Output");
    mDataPath = QDir::toNativeSeparators(mBaseAppPath + "/Engine/bin/tools");
    mUserProjectPath = QDir::toNativeSeparators(mBaseAppPath + "/My Projects");
    mCommentsPath = QDir::toNativeSeparators(mDataPath + "/Comments");
-	
+
    // NSIS (Windows installer) path values
    mNSISScriptPath = QDir::toNativeSeparators(mDataPath + "/nsis/scripts");
    mNSISTemplatePath = QDir::toNativeSeparators(mNSISScriptPath + "/templates");
    mNSISDefaultTemplateName = "default_template.nsi";
    mNSISAppPath = QDir::toNativeSeparators(mDataPath + "/nsis/app");
    mNSISAppName = "makensis.exe";
-	
+
    // zip path values
    mZipAppPath = QDir::toNativeSeparators(mDataPath + "/zip");
    mZipAppName = "zip.exe";
-	
+
    // package manager (mac installer) path values
    mPMScriptPath = QDir::toNativeSeparators(mDataPath + "/packagemaker/scripts");
    mPMTemplatePath = QDir::toNativeSeparators(mPMScriptPath + "/templates");
    mPMDefaultTemplateName = "default_template.pmdoc";
    mPMAppPath = QDir::toNativeSeparators(mDataPath + "/packagemaker/app/PackageMaker.app/Contents/MacOs");
    mPMAppName = "PackageMaker";
-	
-   mTestPath = mBaseAppPath + QDir::separator() +  "Test";
-	
+
+   mTestPath = QDir::toNativeSeparators(mBaseAppPath + "/Test");
+
    mAppStyleSheetPath.append(mBaseAppPath + "/Engine/bin/tools/style.css");
 
    // this is defaulted to false and set to true if it finds another version of itself running,
@@ -172,7 +172,7 @@ bool Torque3DFrontloader::setSelectedProjectByUniqueName(const QString &uniqueNa
       {
          ui.ProjectTreeList->setSelected(item);
          QScrollBar *bar = ui.ProjectTreeList->mScrollArea->verticalScrollBar();
-		 
+
          bar->setValue(70);
       }
    }
@@ -185,7 +185,7 @@ void Torque3DFrontloader::setupTcp()
    connect(&tcpServer, SIGNAL(newConnection()), this, SLOT(acceptConnection()));
 
    tcpServer.listen(QHostAddress::LocalHost, 53535);
-   
+
    // if we haven't received a message yet then stop looking for one,
    // this is in case we happen to communicate to another app
    // listening on the same port (should be a rare case)
@@ -209,7 +209,7 @@ void Torque3DFrontloader::updateServerProgress()
       activateWindow();
       show();
    }
-   tcpServerConnection->close();   
+   tcpServerConnection->close();
 }
 
 void Torque3DFrontloader::updateClientProgress()
@@ -227,7 +227,7 @@ void Torque3DFrontloader::sendLaunchMessage(bool sendLaunch)
 {
    connect(&tcpClient, SIGNAL(connected()), this, SLOT(startTransfer()));
    connect(&tcpClient, SIGNAL(readyRead()), this, SLOT(updateClientProgress()));
-   
+
    tcpClient.connectToHost(QHostAddress::LocalHost, 53535);
    //tcpClient.waitForConnected(100);
 
@@ -254,8 +254,8 @@ void Torque3DFrontloader::createActions()
    connect(restoreAction, SIGNAL(triggered()), this, SLOT(showNormal()));
 
    quitAction = new QAction(tr("&Quit"), this);
-   connect(quitAction, SIGNAL(triggered()), qApp, SLOT(quit()));   
-   
+   connect(quitAction, SIGNAL(triggered()), qApp, SLOT(quit()));
+
    clearSettingsAction = new QAction(tr("Clear Settings"), this);
    connect(clearSettingsAction, SIGNAL(triggered()), this, SLOT(clearSettings()));
 }
@@ -281,7 +281,7 @@ void Torque3DFrontloader::createProjectList()
    connect(mProjectList, SIGNAL(projectEntryRemoved(ProjectEntry *)), this, SLOT(projectEntryRemoved(ProjectEntry *)));
    connect(mProjectList, SIGNAL(projectEntryAdded(ProjectEntry *)), this, SLOT(projectEntryAdded(ProjectEntry *)));
    connect(mProjectList, SIGNAL(projectCategoryAdded(QString)), this, SLOT(projectCategoryAdded(QString)));
-   connect(mProjectList, SIGNAL(projectCategoryRemoved(QString)), this, SLOT(projectCategoryRemoved(QString))); 
+   connect(mProjectList, SIGNAL(projectCategoryRemoved(QString)), this, SLOT(projectCategoryRemoved(QString)));
    connect(mProjectList, SIGNAL(minimizeApp()), this, SLOT(showMinimized()));
    connect(mProjectList, SIGNAL(maximizeApp()), this, SLOT(maximizeApp()));
    connect(mProjectList, SIGNAL(hideApp()), this, SLOT(hideApp()));
@@ -293,7 +293,7 @@ void Torque3DFrontloader::createProgressData()
 {
    // set up our progress dialog, data, and stages
    mProgressDialog = new ProgressDialog(this);
-	
+
    mPackageStagingStage = new ProgressDialogStage("Staging Project Files");
    //mPackageStagingStage->addSubStage("Compiling scripts", 5);
    mPackageStagingStage->addSubStage("Copying files", 100);
@@ -308,7 +308,7 @@ void Torque3DFrontloader::createProgressData()
    mPackageWebStage = new ProgressDialogStage("Web Installer");
    mPackageWebStage->addSubStage("Creating Script", 10);
    mPackageWebStage->addSubStage("Packaging files", 90);
-    
+
    mPackageData = new ProgressDialogData("Packaging Progress");
 
    mCreateTemplateCopyStage = new ProgressDialogStage("Template Files");
@@ -352,7 +352,7 @@ void Torque3DFrontloader::startUp()
 {
    QSettings settings;
    settings.beginGroup("Startup");
-   QString startProject = settings.value("lastSelectedProject", "").toString(); 
+   QString startProject = settings.value("lastSelectedProject", "").toString();
    settings.endGroup();
 
    if(startProject.isEmpty())
@@ -394,7 +394,7 @@ void Torque3DFrontloader::hideApp()
 
 void Torque3DFrontloader::minimizeApp()
 {
-   setWindowState(windowState() ^ Qt::WindowMinimized); 
+   setWindowState(windowState() ^ Qt::WindowMinimized);
 }
 
 void Torque3DFrontloader::maximizeApp()
@@ -405,7 +405,7 @@ void Torque3DFrontloader::maximizeApp()
 
 void Torque3DFrontloader::iconActivated(QSystemTrayIcon::ActivationReason reason)
 {
-   switch (reason) 
+   switch (reason)
    {
       case QSystemTrayIcon::Trigger:
          break;
@@ -422,7 +422,7 @@ void Torque3DFrontloader::iconActivated(QSystemTrayIcon::ActivationReason reason
 
       default:
          ;
-   }   
+   }
 }
 
 void Torque3DFrontloader::resizeEvent(QResizeEvent *event)
@@ -513,11 +513,11 @@ void Torque3DFrontloader::updateSelectedProjectInfo()
    }
 }
 
-void Torque3DFrontloader::setSelectedApp(ProjectEntry *app, bool skipWidgetUpdate) 
-{ 
+void Torque3DFrontloader::setSelectedApp(ProjectEntry *app, bool skipWidgetUpdate)
+{
    if(app != NULL)
    {
-      mSelectedApp = app; 
+      mSelectedApp = app;
    }
 };
 
@@ -529,7 +529,7 @@ void Torque3DFrontloader::setFirstSelectedProject()
    {
       setSelectedProject(entry);
       ProjectTreeItem *item = ui.ProjectTreeList->mProjectItemList.value(entry->mRootName + "-" + entry->mName);
-   
+
       if(item != NULL)
       {
          ui.ProjectTreeList->setSelected(item);
@@ -567,7 +567,7 @@ void Torque3DFrontloader::packageProjectStaging()
    if(rootProjectPath.exists())
    {
       outputDir.setPath(outputDir.path() + QDir::separator() + mSelectedProject->mName + QDir::separator() + "data");
-	   
+
       // create the project staging dir if it doesn't already exist
       if(!outputDir.exists())
       {
@@ -576,7 +576,7 @@ void Torque3DFrontloader::packageProjectStaging()
       else
       {
          // this staging path already exists
-         int ret = QMessageBox::question(this, tr("Package Project"), tr("This staging path already exists.  Do you want to overwrite?"), 
+         int ret = QMessageBox::question(this, tr("Package Project"), tr("This staging path already exists.  Do you want to overwrite?"),
          QMessageBox::Ok, QMessageBox::Cancel);
 
          if(ret == QMessageBox::Ok)
@@ -589,9 +589,9 @@ void Torque3DFrontloader::packageProjectStaging()
             prompt->setLayout(promptLayout);
             promptLayout->addWidget(promptText);
             prompt->show();
-			
+
             bool removed = deletePath(outputDir.path(), false);
-         
+
             prompt->hide();
             delete prompt;
 
@@ -609,7 +609,7 @@ void Torque3DFrontloader::packageProjectStaging()
             return;
          }
       }
-	   
+
       if(PlatformCheck::isMac())
       {
          QString webAdd;
@@ -619,12 +619,12 @@ void Torque3DFrontloader::packageProjectStaging()
          }
 
          outputDir.setPath(outputDir.path() + "/" + getSelectedProject()->mName + webAdd);
-         
+
          if(!outputDir.exists())
          {
             outputDir.mkpath(outputDir.path());
          }
-      } 
+      }
 
       // our root project path exists, time to copy everything we want over to staging
       rootProjectPath.setFilter(QDir::AllDirs | QDir::Files | QDir::Hidden);
@@ -673,7 +673,7 @@ void Torque3DFrontloader::createProjectCheck()
 
    createClear();
 
-   mProgressDialog->doneWithDialog("Project Creation Complete", QDir::toNativeSeparators(mNewProjectDir.path()), 
+   mProgressDialog->doneWithDialog("Project Creation Complete", QDir::toNativeSeparators(mNewProjectDir.path()),
       "Your new project has been created, you can find it here:");
 
    QString uniqueName;
@@ -707,14 +707,14 @@ void Torque3DFrontloader::createNewProject(const QString &templatePath, const QS
    if(mNewProjectDir.exists())
    {
       // a project under this name already exists, need to prompt to replace or cancel
-      int ret = QMessageBox::question(this, tr("Create New Project"), tr("A project exists with this name.  Do you want to overwrite?"), 
+      int ret = QMessageBox::question(this, tr("Create New Project"), tr("A project exists with this name.  Do you want to overwrite?"),
       QMessageBox::Ok, QMessageBox::Cancel);
 
       if(ret == QMessageBox::Ok)
       {
          //QDir rmDir(mNewProjectDir.path());
          bool removed = deletePath(mNewProjectDir.path());
-         
+
          if(!removed)
          {
             QMessageBox::critical(this, tr("Could Not Overwrite"), tr("The project could not be overwritten, choose a new name or ensure no"
@@ -736,7 +736,7 @@ void Torque3DFrontloader::createNewProject(const QString &templatePath, const QS
 
    // now lets set the data and show the progress dialog
    mProgressDialog->setData(mCreateData);
-   
+
    createProjectCheck();
 }
 
@@ -805,7 +805,7 @@ void Torque3DFrontloader::createCancel()
       }
       else if(mCreateReformattingFiles)
       {
-         emit setReformattingFilesThreadExit();   
+         emit setReformattingFilesThreadExit();
       }
       else if(mCreateProjectGeneration)
       {
@@ -813,7 +813,7 @@ void Torque3DFrontloader::createCancel()
       }
 
    createClear();
-   } 
+   }
 
    // now let's resume
    if(mCreateTemplateCopy)
@@ -904,29 +904,29 @@ void Torque3DFrontloader::createReformattingFiles()
 
    // rename the .exe
    renameFile(file + "game/" + templateName + ".exe", newName + ".exe");
-   
+
    // rename the .exe's dll
    renameFile(file + "game/" + templateName + ".dll", newName + ".dll");
-   
+
    // rename the NP (Firefox) web plugin .dll
    renameFile(file + "game/NP " + templateName + " Plugin.dll", "NP " + newName + " Plugin.dll");
-   
+
    // rename the IE (Internet Explorer) web plugin .dll
    renameFile(file + "game/IE " + templateName + " Plugin.dll", "IE " + newName + " Plugin.dll");
-   
+
    // rename the debug .exe
    renameFile(file + "game/" + templateName + "_DEBUG.exe", newName + "_DEBUG.exe");
 
    // rename the debug .exe's dll
    renameFile(file + "game/" + templateName + "_DEBUG.dll", newName + "_DEBUG.dll");
-   
+
    // check for an "r" .exe, useful for testing
    renameFile(file + "game/r" + templateName + ".exe", "r" + newName + ".exe");
-   
+
    // check for mac apps
    renameMacApp(file + "game/" + templateName + ".app", templateName, templateName + " Bundle", "" + newName + ".app", newName + " Bundle");
    renameMacApp(file + "game/" + templateName + "_DEBUG.app", templateName + "_DEBUG", templateName + " Bundle", "" + newName + "_DEBUG.app", newName + " Bundle");
-   
+
    mProgressDialog->setSubStageProgress(33);
 
    // rename the .torsion
@@ -936,7 +936,7 @@ void Torque3DFrontloader::createReformattingFiles()
 
    // rename the .torsion.opt
    renameFile(file + "game/" + templateName + ".torsion.opt", newName + ".torsion.opt");
-   
+
    mProgressDialog->setSubStageProgress(100);
 
    if(!mCreateReformattingFilesPause)
@@ -959,21 +959,22 @@ void Torque3DFrontloader::createProjectGeneration()
    }
 
    QStringList argList;
-   QString stringFirst(mBaseAppPath + "/Tools/projectGenerator/projectGenerator.php");
-   QString stringSecond(rootPath + "/buildFiles/config/project.conf");
-   QString stringThird(mBaseAppPath);
-   
+
    argList.append(mBaseAppPath + "/Tools/projectGenerator/projectGenerator.php");
-   
+
    if(PlatformCheck::isWin())
    {
       argList.append(rootPath + "/buildFiles/config/project.conf");
    }
-   else
+   else if(PlatformCheck::isMac())
    {
       argList.append(rootPath + "/buildFiles/config/project.mac.conf");
    }
-      
+   else if(PlatformCheck::isLinux())
+   {
+      argList.append(rootPath + "/buildFiles/config/project.linux.conf");
+   }
+
    argList.append(mBaseAppPath);
 
    if(mProjectGenerationProcess != NULL)
@@ -995,7 +996,7 @@ void Torque3DFrontloader::createProjectGeneration()
       QString phpPath(mBaseAppPath + "/Engine/bin/php/php.exe");
       mProjectGenerationProcess->start(phpPath, argList);
    }
-   else if(PlatformCheck::isMac())
+   else if(PlatformCheck::isMac() || PlatformCheck::isLinux())
    {
       QString phpPath("/usr/bin/php");
       mProjectGenerationProcess->start(phpPath, argList);
@@ -1036,7 +1037,7 @@ void Torque3DFrontloader::projectGenerationFinished(int exitCode, QProcess::Exit
 void Torque3DFrontloader::projectGenerationExitNow()
 {
    mProjectGenerationExitNow = true;
-   mProjectGenerationProcess->kill();  
+   mProjectGenerationProcess->kill();
 }
 
 void Torque3DFrontloader::projectGenerationErrorWrite()
@@ -1061,7 +1062,7 @@ void Torque3DFrontloader::replaceTextInFile(QString file, QString srcText, QStri
    {
       QString fileString = srcFile.readAll();
       srcFile.close();
-	  
+
       if(srcFile.open(QIODevice::WriteOnly))
       {
          fileString.replace(srcText, dstText);
@@ -1111,7 +1112,7 @@ void Torque3DFrontloader::updateCreateProjectProgress(int count, QString detailT
 
    double floatCount = QVariant(count).toDouble();
    double floatCountTotal = QVariant(mCreateProjectFileCount).toDouble();
-   
+
    double floatPercent = (floatCount / floatCountTotal) * 100;
    int percent = QVariant(floatPercent).toInt();
 
@@ -1136,11 +1137,11 @@ void Torque3DFrontloader::packageProject(QString projectOutputPath)
    // by default all but staging is set to true, then UI values are checked
    // whether the other processes should happen
    mPackagingStagingDone = false;
-   mPackagingZipDone = true;	
+   mPackagingZipDone = true;
    mPackagingInstallerDone = true;
    mPackagingWebDone = true;
    mPackagingStaging = false;
-   mPackagingZip = false;	
+   mPackagingZip = false;
    mPackagingInstaller = false;
    mPackagingWeb = false;
 
@@ -1223,7 +1224,7 @@ void Torque3DFrontloader::packageZip()
    {
       zipPath.append(mZipAppPath + QDir::separator() + mZipAppName);
    }
-   else if(PlatformCheck::isMac())
+   else if(PlatformCheck::isMac() || PlatformCheck::isLinux())
    {
       zipPath.append("zip");
    }
@@ -1240,11 +1241,11 @@ void Torque3DFrontloader::packageZip()
    args << outputZipFile;
    args << "-r";
    args << ".";
-   mZipProcess->start(zipPath, args);	  
+   mZipProcess->start(zipPath, args);
 }
 
 void Torque3DFrontloader::packageWeb()
-{ 
+{
    // lets copy over our web files
    QString projectGamePath = getSelectedProject()->getAppPath();
    projectGamePath.append("/web");
@@ -1287,7 +1288,7 @@ void Torque3DFrontloader::loadStylesheet()
       styleString.append(QString(styleFile.readAll()));
       styleFile.close();
    }
-	
+
    if(PlatformCheck::isMac())
    {
       styleFile.setFileName(QDir::toNativeSeparators(ProjectList::getAppPath() + "/Engine/bin/tools/style-mac.css"));
@@ -1297,13 +1298,13 @@ void Torque3DFrontloader::loadStylesheet()
          styleFile.close();
       }
    }
-	
+
    qApp->setStyleSheet(styleString);
 }
 
 void Torque3DFrontloader::on_CreateNewProjectButton_clicked()
 {
-   mNewProjectPage->launch();   
+   mNewProjectPage->launch();
 }
 
 
@@ -1393,7 +1394,7 @@ void Torque3DFrontloader::openSourceCode()
    ProjectEntry *entry = getSelectedProject();
    if(entry == NULL)
       return;
-   
+
    // lets start our path out with the buildFiles directory, after this it begins to differ
    // based on platform and source editor version (on Windows VS 2008 or 2010)
    QString sourceProject(entry->mRootPath + "/buildFiles");
@@ -1413,7 +1414,7 @@ void Torque3DFrontloader::openSourceCode()
          items << "2008" << "2010";
          bool ok;
 
-         QString item = QInputDialog::getItem(this, tr("Visual Studios Version"), 
+         QString item = QInputDialog::getItem(this, tr("Visual Studios Version"),
                            tr("Select your Visual Studios version"), items, 0, false, &ok);
 
          if(ok && !item.isEmpty())
@@ -1431,25 +1432,38 @@ void Torque3DFrontloader::openSourceCode()
    }
    else if(PlatformCheck::isMac())
    {
-      sourceProject.append(QString("/Xcode/%1.xcodeproj").arg(entry->mName));  
+      sourceProject.append(QString("/Xcode/%1.xcodeproj").arg(entry->mName));
+   }
+   else if(PlatformCheck::isLinux())
+   {
+      sourceProject.append("/Make/Makefile");
    }
 
    QFile sourceProjectFile(sourceProject);
    if(sourceProjectFile.exists())
    {
       QDesktopServices::openUrl(QUrl("file:///" + sourceProject));
-	  
+
       if(PlatformCheck::isWin())
       {
          QMessageBox::information(this, tr("Opening Source Code"), tr("The solution file has been called and the specified") +
             tr(" Visual Studios version should be opening.  This may take a moment.  If the solution file") +
-            tr(" does not open then ensure you have Visual Studios installed and the .sln extension is properly") + 
+            tr(" does not open then ensure you have Visual Studios installed and the .sln extension is properly") +
             tr(" mapped to open in Visual Studios."));
       }
       else if(PlatformCheck::isMac())
       {
-         QMessageBox::information(this, tr("Opening Source Code"), tr("The Xcode project file has been called and Xcode should") + 
+         QMessageBox::information(this, tr("Opening Source Code"), tr("The Xcode project file has been called and Xcode should") +
             tr(" be opening.  This may take a moment.  If it does not properly open ensure you have Xcode installed"));
+      }
+      else if(PlatformCheck::isLinux())
+      {
+         QMessageBox::information(this, tr("Opening Source Code"),
+            tr("Xdg-open has been called and your system's default text ") +
+            tr("editor should be opening your Makefile.  This may take a ") +
+            tr("moment.  If it does not open ensure that you've setup ") +
+            tr("xdg-open properly.  For more information about xdg-open, ") +
+            tr("visit https://wiki.archlinux.org/index.php/Xdg-open"));
       }
    }
    else
@@ -1468,7 +1482,7 @@ void Torque3DFrontloader::openSourceCode()
 }
 
 void Torque3DFrontloader::generateSourceProject()
-{ 
+{
    QDialog *prompt = new QDialog();
    prompt->setModal(true);
    QLabel *promptText = new QLabel(QString("Generating source projects, please wait... "));
@@ -1495,53 +1509,49 @@ void Torque3DFrontloader::generateSourceProject()
 
 bool Torque3DFrontloader::generateProjects(QString rootPath)
 {
-   QString buildFiles(rootPath + "/buildFiles");
-
    QStringList argList;
-   QString stringFirst(mBaseAppPath + "/Tools/projectGenerator/projectGenerator.php");
-   QString stringSecond(rootPath + "/buildFiles/config/project.conf");
-   QString stringThird(mBaseAppPath);
-   
    argList.append(mBaseAppPath + "/Tools/projectGenerator/projectGenerator.php");
-   
+
    if(PlatformCheck::isWin())
    {
       argList.append(rootPath + "/buildFiles/config/project.conf");
    }
-   else
+   else if(PlatformCheck::isMac())
    {
       argList.append(rootPath + "/buildFiles/config/project.mac.conf");
    }
-   
-   argList.append(mBaseAppPath);
+   else if(PlatformCheck::isLinux())
+   {
+      argList.append(rootPath + "/buildFiles/config/project.linux.conf");
+   }
 
-   QString data;
+   argList.append(mBaseAppPath);
 
    bool success = false;
    if(PlatformCheck::isWin())
    {
       QString phpPath(mBaseAppPath + "/Engine/bin/php/php.exe");
-      QProcess *process = new QProcess(this);	  
+      QProcess *process = new QProcess(this);
       process->setWorkingDirectory(rootPath);
-	  
+
       process->start(phpPath, argList);
       success = process->waitForStarted();
-	  
+
       if(success)
          success = process->waitForFinished(300000);  // Wait for up to 5 minutes
 
-      data = process->readAll();
+      process->readAll();
 
    }
-   else if(PlatformCheck::isMac())
+   else if(PlatformCheck::isMac() || PlatformCheck::isLinux())
    {
       QString phpPath("/usr/bin/php");
       QProcess *process = new QProcess(this);
       process->setWorkingDirectory(rootPath);
-       
+
       process->start(phpPath, argList);
       success = process->waitForStarted();
-	  
+
       if(success)
          success = process->waitForFinished();
    }
@@ -1551,56 +1561,52 @@ bool Torque3DFrontloader::generateProjects(QString rootPath)
 
 void Torque3DFrontloader::pauseProcess(QProcess *process)
 {
-#ifdef Q_WS_WIN
-   _PROCESS_INFORMATION *pi = process->pid();
-   PauseResumeThreadList(pi->dwProcessId);
-#endif
-
-#ifdef Q_WS_MAC
-   ::kill(process->pid(), SIGSTOP);   
-#endif
+   #if defined(Q_OS_WIN32)
+      _PROCESS_INFORMATION *pi = process->pid();
+      PauseResumeThreadList(pi->dwProcessId);
+   #elif defined(Q_OS_MAC) || defined(Q_OS_LINUX)
+      ::kill(process->pid(), SIGSTOP);
+   #endif
 }
 
 void Torque3DFrontloader::resumeProcess(QProcess *process)
 {
-#ifdef Q_WS_WIN
-   _PROCESS_INFORMATION *pi = process->pid();
-   PauseResumeThreadList(pi->dwProcessId, true);
-#endif
-
-#ifdef Q_WS_MAC
-   ::kill(process->pid(), SIGCONT);  
-#endif
+   #if defined(Q_OS_WIN32)
+      _PROCESS_INFORMATION *pi = process->pid();
+      PauseResumeThreadList(pi->dwProcessId, true);
+   #elif defined(Q_OS_MAC) || defined(Q_OS_LINUX)
+      ::kill(process->pid(), SIGCONT);
+   #endif
 }
 
-#ifdef Q_WS_WIN
+#ifdef Q_OS_WIN32
 using namespace std;
-   
-int Torque3DFrontloader::PauseResumeThreadList(DWORD dwOwnerPID, bool bResumeThread) 
-{ 
-   HANDLE        hThreadSnap = NULL; 
-   BOOL          bRet        = FALSE; 
-   THREADENTRY32 te32        = {0}; 
- 
-   // Take a snapshot of all threads currently in the system. 
 
-   hThreadSnap = CreateToolhelp32Snapshot(TH32CS_SNAPTHREAD, 0); 
-   if (hThreadSnap == INVALID_HANDLE_VALUE) 
-      return (FALSE); 
- 
-   // Fill in the size of the structure before using it. 
+int Torque3DFrontloader::PauseResumeThreadList(DWORD dwOwnerPID, bool bResumeThread)
+{
+   HANDLE        hThreadSnap = NULL;
+   BOOL          bRet        = FALSE;
+   THREADENTRY32 te32        = {0};
 
-   te32.dwSize = sizeof(THREADENTRY32); 
- 
-   // Walk the thread snapshot to find all threads of the process. 
-   // If the thread belongs to the process, add its information 
+   // Take a snapshot of all threads currently in the system.
+
+   hThreadSnap = CreateToolhelp32Snapshot(TH32CS_SNAPTHREAD, 0);
+   if (hThreadSnap == INVALID_HANDLE_VALUE)
+      return (FALSE);
+
+   // Fill in the size of the structure before using it.
+
+   te32.dwSize = sizeof(THREADENTRY32);
+
+   // Walk the thread snapshot to find all threads of the process.
+   // If the thread belongs to the process, add its information
    // to the display list.
- 
-   if (Thread32First(hThreadSnap, &te32)) 
-   { 
-      do 
-      { 
-         if (te32.th32OwnerProcessID == dwOwnerPID) 
+
+   if (Thread32First(hThreadSnap, &te32))
+   {
+      do
+      {
+         if (te32.th32OwnerProcessID == dwOwnerPID)
          {
             HANDLE hThread = OpenThread(THREAD_SUSPEND_RESUME, FALSE, te32.th32ThreadID);
             if (bResumeThread)
@@ -1614,113 +1620,114 @@ int Torque3DFrontloader::PauseResumeThreadList(DWORD dwOwnerPID, bool bResumeThr
                SuspendThread(hThread);
             }
             CloseHandle(hThread);
-         } 
+         }
       }
-      while (Thread32Next(hThreadSnap, &te32)); 
-      bRet = TRUE; 
-   } 
+      while (Thread32Next(hThreadSnap, &te32));
+      bRet = TRUE;
+   }
    else
    {
-      bRet = FALSE;          // could not walk the list of threads 
+      bRet = FALSE;          // could not walk the list of threads
    }
- 
-   // Do not forget to clean up the snapshot object. 
-   CloseHandle (hThreadSnap); 
- 
-   return (bRet); 
-} 
-#endif
 
-bool Torque3DFrontloader::getResourceInfo(const QString &filePath, QString &plugin, QString &fileDesc, 
-                                          QString &internalName, QString &mimeType, QString &originalFileName, 
-                                          QString &productName, QString &companyName, QString &companyKey, 
+   // Do not forget to clean up the snapshot object.
+   CloseHandle (hThreadSnap);
+
+   return (bRet);
+}
+#endif // Q_OS_WIN32
+
+bool Torque3DFrontloader::getResourceInfo(const QString &filePath, QString &plugin, QString &fileDesc,
+                                          QString &internalName, QString &mimeType, QString &originalFileName,
+                                          QString &productName, QString &companyName, QString &companyKey,
                                           QString &version)
 {
-#ifdef Q_WS_WIN
-   LPTSTR lpszFilePath = (TCHAR *)filePath.utf16();
+   #if defined(Q_OS_WIN32)
+      LPTSTR lpszFilePath = (TCHAR *)filePath.utf16();
 
-   DWORD dwHandle, dwLen;
-   UINT BufLen;
-   LPTSTR lpData;
-   LPVOID lpBuffer;
+      DWORD dwHandle, dwLen;
+      UINT BufLen;
+      LPTSTR lpData;
+      LPVOID lpBuffer;
 
-   dwLen = GetFileVersionInfoSize( lpszFilePath, &dwHandle );
-   if (!dwLen)
-   {
-      DWORD err = GetLastError();
-      QString errStr;
-      errStr.setNum(err);
-      QMessageBox::warning(this, "Firefox Plug-in", QString("File contains no version information (") + errStr + QString(") for ") + filePath);
-      return false;
-   }
+      dwLen = GetFileVersionInfoSize( lpszFilePath, &dwHandle );
+      if (!dwLen)
+      {
+         DWORD err = GetLastError();
+         QString errStr;
+         errStr.setNum(err);
+         QMessageBox::warning(this, "Firefox Plug-in", QString("File contains no version information (") + errStr + QString(") for ") + filePath);
+         return false;
+      }
 
-   lpData = (LPTSTR) malloc (dwLen);
-   if (!lpData)
-   {
-      QMessageBox::warning(this, "Firefox Plug-in", QString("Unable to create file version buffer for ") + filePath);
-      return false;
-   }
+      lpData = (LPTSTR) malloc (dwLen);
+      if (!lpData)
+      {
+         QMessageBox::warning(this, "Firefox Plug-in", QString("Unable to create file version buffer for ") + filePath);
+         return false;
+      }
 
-   if( !GetFileVersionInfo( lpszFilePath, dwHandle, dwLen, lpData ) )
-   {
-      DWORD err = GetLastError();
-      QString errStr;
-      errStr.setNum(err);
-      QMessageBox::warning(this, "Firefox Plug-in", QString("Unable to retrieve version information (") + errStr + QString(") for ") + filePath);
+      if( !GetFileVersionInfo( lpszFilePath, dwHandle, dwLen, lpData ) )
+      {
+         DWORD err = GetLastError();
+         QString errStr;
+         errStr.setNum(err);
+         QMessageBox::warning(this, "Firefox Plug-in", QString("Unable to retrieve version information (") + errStr + QString(") for ") + filePath);
+
+         free (lpData);
+         return false;
+      }
+
+      // generate the values and store the destination strings to store the results in
+      QStringList entryList;
+      QList<QString*> destValues;
+
+      entryList << "Plugin";
+      destValues.append(&plugin);
+
+      entryList << "FileDescription";
+      destValues.append(&fileDesc);
+
+      entryList << "FileVersion";
+      destValues.append(&internalName);
+
+      entryList << "MIMEType";
+      destValues.append(&mimeType);
+
+      entryList << "OriginalFilename";
+      destValues.append(&originalFileName);
+
+      entryList << "ProductName";
+      destValues.append(&productName);
+
+      entryList << "CompanyName";
+      destValues.append(&companyName);
+
+      entryList << "CompanyKey";
+      destValues.append(&companyKey);
+
+      entryList << "ProductVersion";
+      destValues.append(&version);
+
+      wchar_t widearray[100];
+      for(int i=0; i<entryList.size(); i++)
+      {
+         QString entryString = entryList.at(i);
+         QString entry = "\\StringFileInfo\\040904e4\\" + entryString;
+
+         entry.toWCharArray(widearray);
+         widearray[entry.size()] = '\0';
+
+         if( VerQueryValue( lpData, widearray, &lpBuffer, (PUINT)&BufLen ) )
+         {
+            destValues.at(i)->clear();
+            destValues.at(i)->append(QString::fromWCharArray((wchar_t *)lpBuffer));
+         }
+      }
 
       free (lpData);
-      return false;
-   }
-   
-   // generate the values and store the destination strings to store the results in
-   QStringList entryList;
-   QList<QString*> destValues;
+   #endif // Q_OS_WIN32
 
-   entryList << "Plugin";
-   destValues.append(&plugin);
-
-   entryList << "FileDescription";
-   destValues.append(&fileDesc);
-
-   entryList << "FileVersion";
-   destValues.append(&internalName);
-
-   entryList << "MIMEType";
-   destValues.append(&mimeType);
-
-   entryList << "OriginalFilename";
-   destValues.append(&originalFileName);
-
-   entryList << "ProductName";
-   destValues.append(&productName);
-
-   entryList << "CompanyName";
-   destValues.append(&companyName);
-
-   entryList << "CompanyKey";
-   destValues.append(&companyKey);
-
-   entryList << "ProductVersion";
-   destValues.append(&version);
-
-   wchar_t widearray[100];
-   for(int i=0; i<entryList.size(); i++)
-   {
-      QString entryString = entryList.at(i);
-      QString entry = "\\StringFileInfo\\040904e4\\" + entryString;
-	  
-      entry.toWCharArray(widearray);
-      widearray[entry.size()] = '\0';
-    
-      if( VerQueryValue( lpData, widearray, &lpBuffer, (PUINT)&BufLen ) ) 
-      {
-         destValues.at(i)->clear();
-         destValues.at(i)->append(QString::fromWCharArray((wchar_t *)lpBuffer));
-      }
-   }
-
-   free (lpData);
-#endif
    return true;
 }
 
@@ -1737,42 +1744,42 @@ bool Torque3DFrontloader::setResourceString(const QString &filePath, const QStri
 {
    value.clear();
 
-#ifdef Q_WS_WIN
-   LPTSTR lpszFilePath = (TCHAR *)filePath.utf16();
+   #if defined(Q_OS_WIN32)
+      LPTSTR lpszFilePath = (TCHAR *)filePath.utf16();
 
-   DWORD dwHandle, dwLen;
-   UINT BufLen;
-   LPTSTR lpData;
-   LPVOID lpBuffer;
+      DWORD dwHandle, dwLen;
+      UINT BufLen;
+      LPTSTR lpData;
+      LPVOID lpBuffer;
 
-   dwLen = GetFileVersionInfoSize( lpszFilePath, &dwHandle );
-   if (!dwLen) 
-      return false;
+      dwLen = GetFileVersionInfoSize( lpszFilePath, &dwHandle );
+      if (!dwLen)
+         return false;
 
-   lpData = (LPTSTR) malloc (dwLen);
-   if (!lpData) 
-      return false;
+      lpData = (LPTSTR) malloc (dwLen);
+      if (!lpData)
+         return false;
 
-   if( !GetFileVersionInfo( lpszFilePath, dwHandle, dwLen, lpData ) )
-   {
+      if( !GetFileVersionInfo( lpszFilePath, dwHandle, dwLen, lpData ) )
+      {
+         free (lpData);
+         return false;
+      }
+
+      wchar_t widearray[100];
+      QString entry = "\\StringFileInfo\\040904e4\\" + name;
+      entry.toWCharArray(widearray);
+      widearray[entry.size()] = '\0';
+
+      if( VerQueryValue( lpData, widearray, &lpBuffer, (PUINT)&BufLen ) )
+      {
+         value.clear();
+         value.append(QString::fromWCharArray((wchar_t *)lpBuffer));
+      }
+
       free (lpData);
-      return false;
-   }
+   #endif
 
-   wchar_t widearray[100];
-   QString entry = "\\StringFileInfo\\040904e4\\" + name;
-   entry.toWCharArray(widearray);
-   widearray[entry.size()] = '\0';
-    
-   if( VerQueryValue( lpData, widearray, &lpBuffer, (PUINT)&BufLen ) ) 
-   {
-      value.clear();
-      value.append(QString::fromWCharArray((wchar_t *)lpBuffer));
-   }
-
-   free (lpData);
-#endif
-	
    return true;
 }
 
@@ -1804,7 +1811,7 @@ void Torque3DFrontloader::renameFile(const QString &filePath, const QString &new
 }
 
 void Torque3DFrontloader::renameMacApp(const QString &filePath, const QString &oldName, const QString &bundleName, const QString &newName, const QString &newBundleName, bool processWebPlugin)
-{  
+{
    QFile file(QDir::toNativeSeparators(filePath));
    if(file.exists())
    {
@@ -1815,18 +1822,18 @@ void Torque3DFrontloader::renameMacApp(const QString &filePath, const QString &o
       renameFile(filePath + "/Contents/MacOS/" + oldName, baseName);
       // update the plist
       replaceTextInFile(filePath + "/Contents/Info.plist", oldName, baseName);
-      
+
       // now we need to do the same for the bundle as well as change the app's reference to the bundle
       QString bundlePath(filePath + "/Contents/Frameworks/" + bundleName + ".bundle");
       renameFile(bundlePath + "/Contents/MacOS/" + bundleName, newBundleName);
       replaceTextInFile(bundlePath + "/Contents/Info.plist", bundleName, newBundleName);
       renameFile(bundlePath, newBundleName + ".bundle");
       renameFile(filePath, newName);
-      
+
       // lets process the web plugin, which involves creating a new
       if(processWebPlugin)
       {
-         
+
       }
    }
 }
